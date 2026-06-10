@@ -349,8 +349,9 @@ def display_note_content(note_id):
             f"Created: {note['created_at'][:10]}",
         ], className="text-muted d-block mb-3"),
         html.Hr(),
-        html.Div(
-            dangerously_set_inner_html={"__html": content_html},
+        dcc.Markdown(
+            content_html,
+            dangerously_allow_html=True,
             className="note-content",
             style={"lineHeight": "1.7"}
         ),
@@ -504,10 +505,9 @@ def ask_question(n_clicks, question):
             html.Details([
                 html.Summary(f"{icon} {phase_name} Phase",
                              style={"cursor": "pointer", "fontWeight": 500}),
-                html.Div(
-                    dangerously_set_inner_html={
-                        "__html": render_markdown_latex(phase["content"])
-                    },
+                dcc.Markdown(
+                    render_markdown_latex(phase["content"]),
+                    dangerously_allow_html=True,
                     className="p-2 small",
                     style={"background": "#f8f9fa", "borderRadius": "4px"}
                 ),
@@ -520,8 +520,9 @@ def ask_question(n_clicks, question):
         html.Div([
             html.Strong("🤖 AI: ", style={"color": "#198754"}),
         ]),
-        html.Div(
-            dangerously_set_inner_html={"__html": render_markdown_latex(answer)},
+        dcc.Markdown(
+            render_markdown_latex(answer),
+            dangerously_allow_html=True,
             className="p-3 rounded",
             style={"background": "#f0faf0", "borderLeft": "3px solid #198754"}
         ),
