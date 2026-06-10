@@ -26,6 +26,16 @@ from utils.ai_agent import LLMNotesAgent
 
 # Initialize
 db = Database()
+
+# Load saved settings
+saved_api_key = db.get_setting("api_key", OPENROUTER_API_KEY)
+if saved_api_key:
+    os.environ["OPENROUTER_API_KEY"] = saved_api_key
+
+saved_model = db.get_setting("model", "deepseek/deepseek-v4-flash")
+if saved_model:
+    os.environ["OPENROUTER_MODEL"] = saved_model
+
 agent = LLMNotesAgent(db)
 
 # Dash app
@@ -109,132 +119,138 @@ def note_card(note):
 
 # ─── Layout ───────────────────────────────────────────────────────────────────
 
-sidebar = html.Div([
-    html.H4(["📚 ", html.Span("LLMNotes", style={"fontWeight": 700})],
-            className="text-center mb-4 mt-2"),
-    html.Hr(),
+def serve_layout():
+    saved_api_key = db.get_setting("api_key", OPENROUTER_API_KEY)
+    saved_model = db.get_setting("model", "deepseek/deepseek-v4-flash")
 
-    dbc.Label("OpenRouter API Key", className="fw-bold small"),
-    dbc.Input(
-        id="api-key-input",
-        type="password",
-        placeholder="sk-or-... (enter to set)",
-        value=OPENROUTER_API_KEY,
-        className="mb-3",
-    ),
+    sidebar = html.Div([
+        html.H4(["📚 ", html.Span("LLMNotes", style={"fontWeight": 700})],
+                className="text-center mb-4 mt-2"),
+        html.Hr(),
 
-    dbc.Label("Model Selection", className="fw-bold small"),
-    dbc.Select(
-        id="model-select",
-        options=[
-            {"label": "DeepSeek V4 Flash", "value": "deepseek/deepseek-v4-flash"},
-            {"label": "DeepSeek Chat", "value": "deepseek/deepseek-chat"},
-            {"label": "Claude 3.5 Sonnet", "value": "anthropic/claude-3.5-sonnet"},
-            {"label": "Claude 3 Haiku", "value": "anthropic/claude-3-haiku"},
-            {"label": "GPT-4o", "value": "openai/gpt-4o"},
-            {"label": "GPT-4o Mini", "value": "openai/gpt-4o-mini"},
-        ],
-        value="deepseek/deepseek-v4-flash",
-        className="mb-3",
-    ),
+        dbc.Label("OpenRouter API Key", className="fw-bold small"),
+        dbc.Input(
+            id="api-key-input",
+            type="password",
+            placeholder="sk-or-... (enter to set)",
+            value=saved_api_key,
+            className="mb-3",
+        ),
 
-    html.H6("📄 Add Notes", className="fw-bold mt-3"),
-    dbc.Tabs([
-        dbc.Tab([
-            html.Div([
-                dbc.Label("Upload files", className="mt-2"),
-                dcc.Upload(
-                    id="upload-file",
-                    children=html.Div([
-                        "Drag & drop or ",
-                        html.A("browse files", className="text-primary"),
-                        html.Br(),
-                        html.Small("MD, PDF, images", className="text-muted"),
-                    ]),
-                    style={
-                        "border": "2px dashed #ccc", "borderRadius": "8px",
-                        "padding": "30px 20px", "textAlign": "center",
-                        "cursor": "pointer", "background": "#fafafa"
-                    },
-                    multiple=False,
-                ),
-            ]),
-        ], label="Upload", tab_id="tab-upload"),
+        dbc.Label("Model Selection", className="fw-bold small"),
+        dbc.Select(
+            id="model-select",
+            options=[
+                {"label": "DeepSeek V4 Flash", "value": "deepseek/deepseek-v4-flash"},
+                {"label": "DeepSeek Chat", "value": "deepseek/deepseek-chat"},
+                {"label": "Claude 3.5 Sonnet", "value": "anthropic/claude-3.5-sonnet"},
+                {"label": "Claude 3 Haiku", "value": "anthropic/claude-3-haiku"},
+                {"label": "GPT-4o", "value": "openai/gpt-4o"},
+                {"label": "GPT-4o Mini", "value": "openai/gpt-4o-mini"},
+            ],
+            value=saved_model,
+            className="mb-3",
+        ),
 
-        dbc.Tab([
-            html.Div([
-                dbc.Label("Title (optional)", className="mt-2"),
-                dbc.Input(id="pasted-title", placeholder="Note title", className="mb-2"),
-                dbc.Label("Paste text content", className="fw-bold small"),
-                dbc.Textarea(
-                    id="pasted-text",
-                    placeholder="Paste or type your notes here...",
-                    style={"minHeight": "150px"},
-                    className="mb-2",
-                ),
-                dbc.Button("Add Note", id="btn-add-text", color="success",
-                           size="sm", className="w-100"),
-            ]),
-        ], label="Paste Text", tab_id="tab-paste"),
-    ], id="input-tabs", active_tab="tab-upload"),
+        html.H6("📄 Add Notes", className="fw-bold mt-3"),
+        dbc.Tabs([
+            dbc.Tab([
+                html.Div([
+                    dbc.Label("Upload files", className="mt-2"),
+                    dcc.Upload(
+                        id="upload-file",
+                        children=html.Div([
+                            "Drag & drop or ",
+                            html.A("browse files", className="text-primary"),
+                            html.Br(),
+                            html.Small("MD, PDF, images", className="text-muted"),
+                        ]),
+                        style={
+                            "border": "2px dashed #ccc", "borderRadius": "8px",
+                            "padding": "30px 20px", "textAlign": "center",
+                            "cursor": "pointer", "background": "#fafafa"
+                        },
+                        multiple=False,
+                    ),
+                ]),
+            ], label="Upload", tab_id="tab-upload"),
 
-    html.Hr(),
-    html.H6("💬 Ask Questions", className="fw-bold"),
-    dbc.InputGroup([
-        dbc.Input(id="question-input", placeholder="Ask about your notes...",
-                  type="text"),
-        dbc.Button("Ask", id="btn-ask", color="primary"),
-    ], className="mb-2"),
-    html.Div(id="suggestion-btns", className="d-flex flex-wrap gap-1 mt-1"),
+            dbc.Tab([
+                html.Div([
+                    dbc.Label("Title (optional)", className="mt-2"),
+                    dbc.Input(id="pasted-title", placeholder="Note title", className="mb-2"),
+                    dbc.Label("Paste text content", className="fw-bold small"),
+                    dbc.Textarea(
+                        id="pasted-text",
+                        placeholder="Paste or type your notes here...",
+                        style={"minHeight": "150px"},
+                        className="mb-2",
+                    ),
+                    dbc.Button("Add Note", id="btn-add-text", color="success",
+                               size="sm", className="w-100"),
+                ]),
+            ], label="Paste Text", tab_id="tab-paste"),
+        ], id="input-tabs", active_tab="tab-upload"),
 
-    html.Hr(),
-    html.Small([
-        html.I(className="bi bi-info-circle me-1"),
-        "Resources are converted to Markdown and stored locally.",
-    ], className="text-muted d-block text-center"),
-], style={
-    "height": "100vh", "overflowY": "auto",
-    "padding": "15px", "borderRight": "1px solid #dee2e6"
-})
+        html.Hr(),
+        html.H6("💬 Ask Questions", className="fw-bold"),
+        dbc.InputGroup([
+            dbc.Input(id="question-input", placeholder="Ask about your notes...",
+                      type="text"),
+            dbc.Button("Ask", id="btn-ask", color="primary"),
+        ], className="mb-2"),
+        html.Div(id="suggestion-btns", className="d-flex flex-wrap gap-1 mt-1"),
 
-chat_panel_view = html.Div([
-    html.H5("💬 Conversations", style={"fontWeight": 600}),
-    html.Div(id="conversation-history", children=[]),
-    html.Div(id="loading-output"),
-])
+        html.Hr(),
+        html.Small([
+            html.I(className="bi bi-info-circle me-1"),
+            "Resources are converted to Markdown and stored locally.",
+        ], className="text-muted d-block text-center"),
+    ], style={
+        "height": "100vh", "overflowY": "auto",
+        "padding": "15px", "borderRight": "1px solid #dee2e6"
+    })
 
-note_viewer_view = html.Div([
-    dbc.Button("← Back", id="btn-back-notes", color="secondary", size="sm", className="mb-2"),
-    html.Div(id="note-content-display"),
-])
+    chat_panel_view = html.Div([
+        html.H5("💬 Conversations", style={"fontWeight": 600}),
+        html.Div(id="conversation-history", children=[]),
+        html.Div(id="loading-output"),
+    ])
 
-main_content = html.Div([
-    # Notes panel
-    html.Div([
-        html.H5("📝 My Notes", className="d-flex justify-content-between align-items-center mb-3",
-                style={"fontWeight": 600}),
-        html.Div(id="notes-list", children=[]),
-    ], id="notes-panel", style={"display": "block"}),
+    note_viewer_view = html.Div([
+        dbc.Button("← Back", id="btn-back-notes", color="secondary", size="sm", className="mb-2"),
+        html.Div(id="note-content-display"),
+    ])
 
-    # Note viewer
-    html.Div(note_viewer_view, id="note-viewer", style={"display": "none"}),
+    main_content = html.Div([
+        # Notes panel
+        html.Div([
+            html.H5("📝 My Notes", className="d-flex justify-content-between align-items-center mb-3",
+                    style={"fontWeight": 600}),
+            html.Div(id="notes-list", children=[]),
+        ], id="notes-panel", style={"display": "block"}),
 
-    # Chat panel
-    html.Div(chat_panel_view, id="chat-panel", style={"display": "none"}),
-], id="main-content", className="p-4")
+        # Note viewer
+        html.Div(note_viewer_view, id="note-viewer", style={"display": "none"}),
 
-app.layout = html.Div([
-    dcc.Store(id="selected-note-id", storage_type="memory"),
-    dcc.Store(id="current-view", data="notes", storage_type="memory"),
-    dcc.Store(id="api-key-store", data=OPENROUTER_API_KEY, storage_type="local"),
-    dcc.Store(id="model-store", data="deepseek/deepseek-v4-flash", storage_type="local"),
-    dbc.Container([
-        dbc.Row([
-            dbc.Col(sidebar, width=3, style={"padding": "0"}),
-            dbc.Col(main_content, width=9, style={"padding": "0"}),
-        ], className="g-0"),
-    ], fluid=True, style={"height": "100vh"}),
-])
+        # Chat panel
+        html.Div(chat_panel_view, id="chat-panel", style={"display": "none"}),
+    ], id="main-content", className="p-4")
+
+    return html.Div([
+        dcc.Store(id="selected-note-id", storage_type="memory"),
+        dcc.Store(id="current-view", data="notes", storage_type="memory"),
+        dcc.Store(id="api-key-store", data=saved_api_key, storage_type="local"),
+        dcc.Store(id="model-store", data=saved_model, storage_type="local"),
+        dbc.Container([
+            dbc.Row([
+                dbc.Col(sidebar, width=3, style={"padding": "0"}),
+                dbc.Col(main_content, width=9, style={"padding": "0"}),
+            ], className="g-0"),
+        ], fluid=True, style={"height": "100vh"}),
+    ])
+
+app.layout = serve_layout
 
 
 # ─── Callbacks ────────────────────────────────────────────────────────────────
@@ -248,6 +264,7 @@ def update_api_key(key):
         os.environ["OPENROUTER_API_KEY"] = key
         # Update agent session
         agent.session.headers.update({"Authorization": f"Bearer {key}"})
+        db.set_setting("api_key", key)
     return key or ""
 
 
@@ -258,6 +275,7 @@ def update_api_key(key):
 def update_model(model):
     if model:
         os.environ["OPENROUTER_MODEL"] = model
+        db.set_setting("model", model)
     return model or "deepseek/deepseek-v4-flash"
 
 

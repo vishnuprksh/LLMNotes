@@ -50,7 +50,23 @@ class Database:
             CREATE INDEX IF NOT EXISTS idx_notes_title ON notes(title);
             CREATE INDEX IF NOT EXISTS idx_notes_created ON notes(created_at);
             CREATE INDEX IF NOT EXISTS idx_conversations_created ON conversations(created_at);
+
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
         """)
+        self.conn.commit()
+
+    def get_setting(self, key, default=None):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT value FROM settings WHERE key = ?", (key,))
+        row = cursor.fetchone()
+        return row['value'] if row else default
+
+    def set_setting(self, key, value):
+        cursor = self.conn.cursor()
+        cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value))
         self.conn.commit()
 
     def add_note(self, title, filename, source_filename=None, source_type="md", content=""):
