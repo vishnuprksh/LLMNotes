@@ -182,21 +182,6 @@ sidebar = html.Div([
     "padding": "15px", "borderRight": "1px solid #dee2e6"
 })
 
-main_content = html.Div([
-    # Notes panel
-    html.Div([
-        html.H5("📝 My Notes", className="d-flex justify-content-between align-items-center mb-3",
-                style={"fontWeight": 600}),
-        html.Div(id="notes-list", children=[]),
-    ], id="notes-panel", style={"display": "block"}),
-
-    # Note viewer
-    html.Div(id="note-viewer", style={"display": "none"}),
-
-    # Chat panel
-    html.Div(id="chat-panel", style={"display": "none"}),
-], id="main-content", className="p-4")
-
 chat_panel_view = html.Div([
     html.H5("💬 Conversations", style={"fontWeight": 600}),
     html.Div(id="conversation-history", children=[]),
@@ -207,6 +192,21 @@ note_viewer_view = html.Div([
     dbc.Button("← Back", id="btn-back-notes", color="secondary", size="sm", className="mb-2"),
     html.Div(id="note-content-display"),
 ])
+
+main_content = html.Div([
+    # Notes panel
+    html.Div([
+        html.H5("📝 My Notes", className="d-flex justify-content-between align-items-center mb-3",
+                style={"fontWeight": 600}),
+        html.Div(id="notes-list", children=[]),
+    ], id="notes-panel", style={"display": "block"}),
+
+    # Note viewer
+    html.Div(note_viewer_view, id="note-viewer", style={"display": "none"}),
+
+    # Chat panel
+    html.Div(chat_panel_view, id="chat-panel", style={"display": "none"}),
+], id="main-content", className="p-4")
 
 app.layout = html.Div([
     dcc.Store(id="selected-note-id", storage_type="memory"),
@@ -285,64 +285,19 @@ def select_note(n_clicks, view):
 
 
 @callback(
-    Output("main-content", "children"),
-    Input("current-view", "data"),
-    Input("selected-note-id", "data"),
-    prevent_initial_call=False,
-)
-def render_main_view(view, note_id):
-    if view == "notes" or not note_id:
-        return html.Div([
-            html.Div([
-                html.H5("📝 My Notes",
-                        className="d-flex justify-content-between align-items-center mb-3",
-                        style={"fontWeight": 600}),
-                html.Div(id="notes-list", children=[]),
-            ], id="notes-panel"),
-        ], className="p-4")
-
-    elif view == "note":
-        note = db.get_note(note_id)
-        if not note:
-            return html.Div(["Note not found"], className="p-4")
-
-        content_html = render_markdown_latex(note["content"] or "")
-        return html.Div([
-            dbc.Button("← Back to Notes", id="btn-back-notes", color="secondary",
-                       size="sm", className="mb-2"),
-            html.H4(note["title"], style={"fontWeight": 600}),
-            html.Small([
-                f"Source: {note['source_filename'] or 'Direct input'} | ",
-                f"Type: {note['source_type']} | ",
-                f"Created: {note['created_at'][:10]}",
-            ], className="text-muted d-block mb-3"),
-            html.Hr(),
-            html.Div(
-                dangerously_set_inner_html={"__html": content_html},
-                className="note-content",
-                style={"lineHeight": "1.7"}
-            ),
-        ], className="p-4")
-
-    elif view == "chat":
-        return html.Div([
-            html.H5("💬 Conversations", style={"fontWeight": 600}),
-            html.Div(id="conversation-history"),
-        ], className="p-4")
-
-    return html.Div([], className="p-4")
-
-
-@callback(
-    Output("chat-panel", "children"),
-    Output("chat-panel", "style"),
     Output("notes-panel", "style"),
+    Output("note-viewer", "style"),
+    Output("chat-panel", "style"),
     Input("current-view", "data"),
 )
-def toggle_panels(view):
-    if view == "chat":
-        return chat_panel_view, {"display": "block"}, {"display": "none"}
-    return no_update, {"display": "none"}, {"display": "block"}
+def toggle_views(view):
+    if view == "notes":
+        return {"display": "block"}, {"display": "none"}, {"display": "none"}
+    elif view == "note":
+        return {"display": "none"}, {"display": "block"}, {"display": "none"}
+    elif view == "chat":
+        return {"display": "none"}, {"display": "none"}, {"display": "block"}
+    return {"display": "block"}, {"display": "none"}, {"display": "none"}
 
 
 @callback(
@@ -601,18 +556,6 @@ def fill_suggestion(n_clicks):
 
 
 @callback(
-    Output("note-viewer", "style"),
-    Output("notes-panel", "style"),
-    Input("selected-note-id", "data"),
-    prevent_initial_call=True,
-)
-def show_note_viewer(note_id):
-    if note_id:
-        return {"display": "block"}, {"display": "none"}
-    return {"display": "none"}, {"display": "block"}
-
-
-@callback(
     Output("current-view", "data", allow_duplicate=True),
     Input("selected-note-id", "data"),
     prevent_initial_call=True,
@@ -621,6 +564,16 @@ def set_view_to_note(note_id):
     if note_id:
         return "note"
     return "notes"
+
+@callback(
+    Output("current-view", "data", allow_duplicate=True),
+    Input("btn-ask", "n_clicks"),
+    prevent_initial_call=True,
+)
+def set_view_to_chat(n_clicks):
+    if n_clicks:
+        return "chat"
+    return no_update
 
 
 # ─── Run ──────────────────────────────────────────────────────────────────────
