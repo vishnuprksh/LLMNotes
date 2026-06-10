@@ -27,10 +27,12 @@ class LLMNotesAgent:
 
     def _call_llm(self, messages: List[Dict], model: Optional[str] = None, temperature: float = 0.3) -> str:
         """Call OpenRouter API"""
-        if not OPENROUTER_API_KEY:
+        import os
+        api_key = os.environ.get("OPENROUTER_API_KEY", OPENROUTER_API_KEY)
+        if not api_key:
             return "⚠️ OpenRouter API key not configured. Set OPENROUTER_API_KEY environment variable."
 
-        model = model or OPENROUTER_MODEL
+        model = model or os.environ.get("OPENROUTER_MODEL", OPENROUTER_MODEL)
         payload = {
             "model": model,
             "messages": messages,

@@ -123,6 +123,21 @@ sidebar = html.Div([
         className="mb-3",
     ),
 
+    dbc.Label("Model Selection", className="fw-bold small"),
+    dbc.Select(
+        id="model-select",
+        options=[
+            {"label": "DeepSeek V4 Flash", "value": "deepseek/deepseek-v4-flash"},
+            {"label": "DeepSeek Chat", "value": "deepseek/deepseek-chat"},
+            {"label": "Claude 3.5 Sonnet", "value": "anthropic/claude-3.5-sonnet"},
+            {"label": "Claude 3 Haiku", "value": "anthropic/claude-3-haiku"},
+            {"label": "GPT-4o", "value": "openai/gpt-4o"},
+            {"label": "GPT-4o Mini", "value": "openai/gpt-4o-mini"},
+        ],
+        value="deepseek/deepseek-v4-flash",
+        className="mb-3",
+    ),
+
     html.H6("📄 Add Notes", className="fw-bold mt-3"),
     dbc.Tabs([
         dbc.Tab([
@@ -212,6 +227,7 @@ app.layout = html.Div([
     dcc.Store(id="selected-note-id", storage_type="memory"),
     dcc.Store(id="current-view", data="notes", storage_type="memory"),
     dcc.Store(id="api-key-store", data=OPENROUTER_API_KEY, storage_type="local"),
+    dcc.Store(id="model-store", data="deepseek/deepseek-v4-flash", storage_type="local"),
     dbc.Container([
         dbc.Row([
             dbc.Col(sidebar, width=3, style={"padding": "0"}),
@@ -233,6 +249,17 @@ def update_api_key(key):
         # Update agent session
         agent.session.headers.update({"Authorization": f"Bearer {key}"})
     return key or ""
+
+
+@callback(
+    Output("model-store", "data"),
+    Input("model-select", "value"),
+)
+def update_model(model):
+    if model:
+        os.environ["OPENROUTER_MODEL"] = model
+    return model or "deepseek/deepseek-v4-flash"
+
 
 
 @callback(
