@@ -29,7 +29,7 @@ html {
   #notes-panel,
   #note-viewer,
   #chat-panel,
-  #settings-section {
+  #settings-panel {
     max-height: none !important;
     overflow-y: visible !important;
   }

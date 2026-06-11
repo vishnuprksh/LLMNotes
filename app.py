@@ -129,10 +129,13 @@ def serve_layout():
 
     # ── Left Column: Notes / Sources ──
     notes_panel = html.Div([
-        html.H4(["📚 ", html.Span("LLMNotes", style={"fontWeight": 700})],
-                className="mb-3"),
-        html.H5("📝 Added Sources", className="d-flex justify-content-between align-items-center mb-3",
-                style={"fontWeight": 600}),
+        html.Div([
+            html.H4(["📚 ", html.Span("LLMNotes", style={"fontWeight": 700})],
+                    className="mb-0"),
+            dbc.Button(html.I(className="bi bi-gear"), id="btn-settings",
+                       color="light", size="sm"),
+        ], className="d-flex justify-content-between align-items-center mb-3"),
+        html.H5("📝 Added Sources", style={"fontWeight": 600}),
         html.Div(id="notes-list", children=[]),
     ], id="notes-panel", style={"display": "block"})
 
@@ -143,16 +146,11 @@ def serve_layout():
         html.Div(id="note-content-display"),
     ], id="note-viewer", style={"display": "none"})
 
-    left_column = html.Div([
-        notes_panel,
-        note_viewer_panel,
-    ], className="p-4 left-panel", style={
-        "overflowY": "auto",
-        "borderRight": "1px solid #dee2e6"
-    })
-
-    # ── Right Column: Settings + Chat ──
-    settings_section = html.Div([
+    settings_panel = html.Div([
+        html.H4(["📚 ", html.Span("LLMNotes", style={"fontWeight": 700})],
+                className="mb-3"),
+        dbc.Button("← Back to Notes", id="btn-back-from-settings", color="secondary",
+                   size="sm", className="mb-3"),
         dbc.Label("OpenRouter API Key", className="fw-bold small"),
         dbc.Input(
             id="api-key-input", type="password",
@@ -210,8 +208,18 @@ def serve_layout():
                 ]),
             ], label="Paste Text", tab_id="tab-paste"),
         ], id="input-tabs", active_tab="tab-upload"),
-    ], id="settings-section")
+    ], id="settings-panel", style={"display": "none"})
 
+    left_column = html.Div([
+        notes_panel,
+        note_viewer_panel,
+        settings_panel,
+    ], className="p-4 left-panel", style={
+        "overflowY": "auto",
+        "borderRight": "1px solid #dee2e6"
+    })
+
+    # ── Right Column: Chat ──
     chat_section = html.Div([
         html.Hr(),
         html.H5("💬 Chat & Questions", style={"fontWeight": 600}),
@@ -228,7 +236,6 @@ def serve_layout():
     ], id="chat-panel", style={"display": "block"})
 
     right_column = html.Div([
-        settings_section,
         chat_section,
         html.Small([
             html.I(className="bi bi-info-circle me-1"),
@@ -308,6 +315,24 @@ def go_back_to_notes(_, view):
 
 
 @callback(
+    Output("current-view", "data", allow_duplicate=True),
+    Input("btn-settings", "n_clicks"),
+    prevent_initial_call=True,
+)
+def open_settings(_):
+    return "settings"
+
+
+@callback(
+    Output("current-view", "data", allow_duplicate=True),
+    Input("btn-back-from-settings", "n_clicks"),
+    prevent_initial_call=True,
+)
+def close_settings(_):
+    return "notes"
+
+
+@callback(
     Output("selected-note-id", "data"),
     Input({"type": "view-note", "index": ALL}, "n_clicks"),
     State("current-view", "data"),
@@ -333,14 +358,17 @@ def select_note(n_clicks, view):
 @callback(
     Output("notes-panel", "style"),
     Output("note-viewer", "style"),
+    Output("settings-panel", "style"),
     Input("current-view", "data"),
 )
 def toggle_views(view):
     if view == "notes":
-        return {"display": "block"}, {"display": "none"}
+        return {"display": "block"}, {"display": "none"}, {"display": "none"}
     elif view == "note":
-        return {"display": "none"}, {"display": "block"}
-    return {"display": "block"}, {"display": "none"}
+        return {"display": "none"}, {"display": "block"}, {"display": "none"}
+    elif view == "settings":
+        return {"display": "none"}, {"display": "none"}, {"display": "block"}
+    return {"display": "block"}, {"display": "none"}, {"display": "none"}
 
 
 @callback(
