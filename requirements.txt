@@ -1,0 +1,19 @@
+# LLMNotes - Dependencies
+# Install with: pip install -r requirements.txt
+
+# Web UI Framework
+dash>=2.14.0
+dash-bootstrap-components>=1.5.0
+
+# Markdown Rendering
+markdown>=3.5.0
+
+# PDF Text Extraction
+pdfminer.six>=20221105
+
+# Image Processing & OCR
+Pillow>=10.0.0
+pytesseract>=0.3.10
+
+# HTTP Client (OpenRouter API)
+requests>=2.31.0

@@ -123,20 +123,38 @@ def serve_layout():
     saved_api_key = db.get_setting("api_key", OPENROUTER_API_KEY)
     saved_model = db.get_setting("model", "deepseek/deepseek-v4-flash")
 
-    sidebar = html.Div([
+    # ── Left Column: Notes / Sources ──
+    notes_panel = html.Div([
         html.H4(["📚 ", html.Span("LLMNotes", style={"fontWeight": 700})],
-                className="text-center mb-4 mt-2"),
-        html.Hr(),
+                className="mb-3"),
+        html.H5("📝 Added Sources", className="d-flex justify-content-between align-items-center mb-3",
+                style={"fontWeight": 600}),
+        html.Div(id="notes-list", children=[]),
+    ], id="notes-panel", style={"display": "block"})
 
+    note_viewer_panel = html.Div([
+        html.H4(["📚 ", html.Span("LLMNotes", style={"fontWeight": 700})],
+                className="mb-3"),
+        dbc.Button("← Back", id="btn-back-notes", color="secondary", size="sm", className="mb-2"),
+        html.Div(id="note-content-display"),
+    ], id="note-viewer", style={"display": "none"})
+
+    left_column = html.Div([
+        notes_panel,
+        note_viewer_panel,
+    ], className="p-4", style={
+        "height": "100vh", "overflowY": "auto",
+        "borderRight": "1px solid #dee2e6"
+    })
+
+    # ── Right Column: Settings + Chat ──
+    settings_section = html.Div([
         dbc.Label("OpenRouter API Key", className="fw-bold small"),
         dbc.Input(
-            id="api-key-input",
-            type="password",
+            id="api-key-input", type="password",
             placeholder="sk-or-... (enter to set)",
-            value=saved_api_key,
-            className="mb-3",
+            value=saved_api_key, className="mb-3",
         ),
-
         dbc.Label("Model Selection", className="fw-bold small"),
         dbc.Select(
             id="model-select",
@@ -148,10 +166,8 @@ def serve_layout():
                 {"label": "GPT-4o", "value": "openai/gpt-4o"},
                 {"label": "GPT-4o Mini", "value": "openai/gpt-4o-mini"},
             ],
-            value=saved_model,
-            className="mb-3",
+            value=saved_model, className="mb-3",
         ),
-
         html.H6("📄 Add Notes", className="fw-bold mt-3"),
         dbc.Tabs([
             dbc.Tab([
@@ -174,7 +190,6 @@ def serve_layout():
                     ),
                 ]),
             ], label="Upload", tab_id="tab-upload"),
-
             dbc.Tab([
                 html.Div([
                     dbc.Label("Title (optional)", className="mt-2"),
@@ -191,51 +206,33 @@ def serve_layout():
                 ]),
             ], label="Paste Text", tab_id="tab-paste"),
         ], id="input-tabs", active_tab="tab-upload"),
+    ], id="settings-section")
 
+    chat_section = html.Div([
         html.Hr(),
-        html.H6("💬 Ask Questions", className="fw-bold"),
+        html.H5("💬 Chat & Questions", style={"fontWeight": 600}),
+        html.Div(id="conversation-history", children=[]),
+        html.Div(id="loading-output"),
+        html.Hr(),
+        html.H6("Ask a Question", className="fw-bold"),
         dbc.InputGroup([
             dbc.Input(id="question-input", placeholder="Ask about your notes...",
                       type="text"),
             dbc.Button("Ask", id="btn-ask", color="primary"),
         ], className="mb-2"),
         html.Div(id="suggestion-btns", className="d-flex flex-wrap gap-1 mt-1"),
+    ], id="chat-panel", style={"display": "block"})
 
-        html.Hr(),
+    right_column = html.Div([
+        settings_section,
+        chat_section,
         html.Small([
             html.I(className="bi bi-info-circle me-1"),
             "Resources are converted to Markdown and stored locally.",
-        ], className="text-muted d-block text-center"),
-    ], style={
-        "height": "100vh", "overflowY": "auto",
-        "padding": "15px", "borderRight": "1px solid #dee2e6"
+        ], className="text-muted d-block text-center mt-3"),
+    ], className="p-4", style={
+        "height": "100vh", "overflowY": "auto"
     })
-
-    chat_panel_view = html.Div([
-        html.H5("💬 Conversations", style={"fontWeight": 600}),
-        html.Div(id="conversation-history", children=[]),
-        html.Div(id="loading-output"),
-    ])
-
-    note_viewer_view = html.Div([
-        dbc.Button("← Back", id="btn-back-notes", color="secondary", size="sm", className="mb-2"),
-        html.Div(id="note-content-display"),
-    ])
-
-    main_content = html.Div([
-        # Notes panel
-        html.Div([
-            html.H5("📝 My Notes", className="d-flex justify-content-between align-items-center mb-3",
-                    style={"fontWeight": 600}),
-            html.Div(id="notes-list", children=[]),
-        ], id="notes-panel", style={"display": "block"}),
-
-        # Note viewer
-        html.Div(note_viewer_view, id="note-viewer", style={"display": "none"}),
-
-        # Chat panel
-        html.Div(chat_panel_view, id="chat-panel", style={"display": "none"}),
-    ], id="main-content", className="p-4")
 
     return html.Div([
         dcc.Store(id="selected-note-id", storage_type="memory"),
@@ -244,8 +241,8 @@ def serve_layout():
         dcc.Store(id="model-store", data=saved_model, storage_type="local"),
         dbc.Container([
             dbc.Row([
-                dbc.Col(sidebar, width=3, style={"padding": "0"}),
-                dbc.Col(main_content, width=9, style={"padding": "0"}),
+                dbc.Col(left_column, width=5, style={"padding": "0"}),
+                dbc.Col(right_column, width=7, style={"padding": "0"}),
             ], className="g-0"),
         ], fluid=True, style={"height": "100vh"}),
     ])
@@ -332,17 +329,14 @@ def select_note(n_clicks, view):
 @callback(
     Output("notes-panel", "style"),
     Output("note-viewer", "style"),
-    Output("chat-panel", "style"),
     Input("current-view", "data"),
 )
 def toggle_views(view):
     if view == "notes":
-        return {"display": "block"}, {"display": "none"}, {"display": "none"}
+        return {"display": "block"}, {"display": "none"}
     elif view == "note":
-        return {"display": "none"}, {"display": "block"}, {"display": "none"}
-    elif view == "chat":
-        return {"display": "none"}, {"display": "none"}, {"display": "block"}
-    return {"display": "block"}, {"display": "none"}, {"display": "none"}
+        return {"display": "none"}, {"display": "block"}
+    return {"display": "block"}, {"display": "none"}
 
 
 @callback(
@@ -610,17 +604,6 @@ def set_view_to_note(note_id):
     if note_id:
         return "note"
     return "notes"
-
-@callback(
-    Output("current-view", "data", allow_duplicate=True),
-    Input("btn-ask", "n_clicks"),
-    prevent_initial_call=True,
-)
-def set_view_to_chat(n_clicks):
-    if n_clicks:
-        return "chat"
-    return no_update
-
 
 # ─── Run ──────────────────────────────────────────────────────────────────────
 
