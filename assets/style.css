@@ -1,0 +1,193 @@
+/* ========================================================================
+   LLMNotes - Mobile Responsive Styles
+   ======================================================================== */
+
+/* ── Viewport & Base Responsive ── */
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ── Responsive Layout Overrides ── */
+
+/* Stack columns vertically on small screens */
+@media (max-width: 767.98px) {
+  /* Reset fixed heights for mobile */
+  [style*="height: 100vh"] {
+    height: auto !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: visible !important;
+  }
+
+  /* Side panels stack vertically */
+  .row.g-0 {
+    flex-direction: column;
+  }
+
+  /* Notes panel takes proper height */
+  #notes-panel,
+  #note-viewer,
+  #chat-panel,
+  #settings-section {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+
+  /* Left column adjustments */
+  .p-4[style*="height: 100vh"] {
+    padding: 1rem !important;
+    border-right: none !important;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  /* Right column adjustments */
+  .p-4[style*="height: 100vh"]:last-child {
+    padding: 1rem !important;
+  }
+
+  /* Note cards - full width touch targets */
+  .note-card {
+    padding: 0.75rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .note-card .d-flex.gap-1 {
+    gap: 0.5rem !important;
+  }
+
+  /* Make button touch targets larger on mobile */
+  .note-card .btn {
+    min-height: 38px;
+    min-width: 60px;
+    font-size: 0.85rem;
+  }
+
+  /* Upload zone */
+  [style*="border: 2px dashed"] {
+    padding: 20px 12px !important;
+  }
+
+  /* Chat input - full width */
+  .input-group {
+    flex-wrap: nowrap;
+  }
+
+  /* Suggestion buttons stack nicely */
+  #suggestion-btns {
+    gap: 0.35rem !important;
+  }
+
+  #suggestion-btns .btn {
+    font-size: 0.7rem !important;
+    padding: 0.3rem 0.5rem;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  /* Text input areas */
+  #pasted-text {
+    min-height: 100px !important;
+  }
+
+  /* Tab content padding reduction */
+  .tab-content {
+    padding-top: 0.5rem;
+  }
+
+  /* Conversation history spacing */
+  #conversation-history .p-3 {
+    padding: 0.75rem !important;
+  }
+
+  /* Markdown content - reduce font size slightly on mobile */
+  .note-content {
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Model select dropdown full width */
+  #model-select {
+    font-size: 0.85rem;
+  }
+}
+
+/* ── Tablet / Medium Screens ── */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  [style*="height: 100vh"] {
+    height: auto !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .p-4[style*="height: 100vh"] {
+    padding: 1.25rem !important;
+  }
+
+  /* Chat panel adjustments */
+  #settings-section {
+    margin-bottom: 1rem;
+  }
+}
+
+/* ── General Touch-Friendly Improvements ── */
+
+/* Ensure all buttons have adequate touch targets */
+.btn {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Remove hover effects on touch devices (prevents sticky hover state) */
+@media (hover: none) and (pointer: coarse) {
+  .btn:hover {
+    opacity: 0.9;
+  }
+
+  .note-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ── Prevent horizontal scrolling ── */
+body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* ── Fix for Bootstrap Icons on mobile ── */
+.bi {
+  vertical-align: -0.125em;
+}
+
+/* ── Ensure code blocks wrap properly ── */
+pre, code {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* ── Latex block responsiveness ── */
+.latex-block {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  padding: 0.5rem 0;
+}
+
+/* ── Back button spacing on mobile ── */
+#btn-back-notes {
+  min-width: 70px;
+}
+
+/* ── Smooth scrolling for the whole app ── */
+html {
+  scroll-behavior: smooth;
+}

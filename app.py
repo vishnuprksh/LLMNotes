@@ -41,10 +41,14 @@ agent = LLMNotesAgent(db)
 # Dash app
 app = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP, "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"],
+    external_stylesheets=[dbc.themes.BOOTSTRAP, "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css", "/assets/style.css"],
     title="LLMNotes",
     suppress_callback_exceptions=True,
-    update_title=None
+    update_title=None,
+    assets_folder="assets",
+    meta_tags=[
+        {"name": "viewport", "content": "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}
+    ],
 )
 
 server = app.server
@@ -142,8 +146,8 @@ def serve_layout():
     left_column = html.Div([
         notes_panel,
         note_viewer_panel,
-    ], className="p-4", style={
-        "height": "100vh", "overflowY": "auto",
+    ], className="p-4 left-panel", style={
+        "overflowY": "auto",
         "borderRight": "1px solid #dee2e6"
     })
 
@@ -241,10 +245,10 @@ def serve_layout():
         dcc.Store(id="model-store", data=saved_model, storage_type="local"),
         dbc.Container([
             dbc.Row([
-                dbc.Col(left_column, width=5, style={"padding": "0"}),
-                dbc.Col(right_column, width=7, style={"padding": "0"}),
+                dbc.Col(left_column, xs=12, md=5, style={"padding": "0"}),
+                dbc.Col(right_column, xs=12, md=7, style={"padding": "0"}),
             ], className="g-0"),
-        ], fluid=True, style={"height": "100vh"}),
+        ], fluid=True, style={"height": "100vh", "minHeight": "100vh"}),
     ])
 
 app.layout = serve_layout
